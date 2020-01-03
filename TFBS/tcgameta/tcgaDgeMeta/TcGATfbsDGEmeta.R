@@ -1,3 +1,4 @@
+source("https://raw.githubusercontent.com/Shicheng-Guo/GscRbasement/master/GscTools.R")
 library("meta")
 library("metafor")
 library("survival")
@@ -23,24 +24,17 @@ ensg2bed<-function(ENSG){
   return(bed)
 }
 
-
-source("https://raw.githubusercontent.com/Shicheng-Guo/GscRbasement/master/GscTools.R")
-library("metafor")
-library("meta")
-library("metacor")
-
 load("~/hpc/methylation/Pancancer/RNA-seq/rnaseqdata.pancancer.RData")
 
-
 TCGAProjects=c("BLCA","BRCA","CESC","CHOL","COAD","ESCA","GBM","HNSC","KICH","KIRC","KIRP","LIHC","LUAD","LUSC","PAAD","PCPG","PRAD","READ","SARC","STAD","THCA","THYM","UCEC")
-phen1=read.table("~/hpc/methylation/TCGA-clinical-11093.tsv",header = T,sep="\t")
-phen2=read.table("~/hpc/methylation/Pancancer/RNA-seq/File_metadata2.txt",header = T,sep="\t")
+panc<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/PANC/master/extdata/panc.txt",head=T)
+phen1=read.table("https://raw.githubusercontent.com/Shicheng-Guo/PANC/master/extdata/TCGA-clinical-11093.tsv",header = T,sep="\t")
+phen2=read.table("https://raw.githubusercontent.com/Shicheng-Guo/PANC/master/extdata/File_metadata2.txt",header = T,sep="\t")
 head(phen1)
 head(phen2)
 colnames(rnaseqdata)<-unlist(lapply(strsplit(colnames(rnaseqdata),"/"),function(x) x[2]))
 phen<-data.frame(phen2,phen1[match(phen2$cases.0.case_id,phen1$case_id),])
 phen$file_name=gsub(".gz","",phen$file_name)
-
 # prepare phenotype information
 phen<-phen[match(colnames(rnaseqdata),phen$file_name),]
 phen$phen4<-id2phen4(phen$cases.0.samples.0.submitter_id)
@@ -49,99 +43,104 @@ phen$phen2<-id2bin(phen$cases.0.samples.0.submitter_id)
 phen$pid<-phen$project_id
 head(phen)
 
-idx<-which(phen$phen2==1 | phen$phen2==11)
+OS<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/HowtoBook/master/TCGA/OverallSurvivalTime.txt",head=T,sep="\t")
+# match survival information
+idx<-which(c(phen$phen2==1))
 phen<-phen[idx,]
 input<-rnaseqdata[,idx]
-
-idx<-which(phen$pid %in% paste("TCGA-",TCGAProjects,sep=""))
-phen<-phen[idx,]
-input<-input[,idx]
 input[1:5,1:5]
+idx<-na.omit(match(OS$submitter_id,phen$phen3))
+input<-log(input[,idx]+1,2)
 
-input<-log(input+1,2)
-input<-RawNARemove(input)
-input<-RawZeroRemove(input)
+phen<-phen[idx,]
+phen<-data.frame(phen,OS[match(phen$phen3,OS$submitter_id),])
+phen$censored<-as.numeric(!phen$censored)
+phen$week=phen$time/7
+
+i=grep("ENSG00000231246",rownames(input))          # PANC246
+i=grep("ENSG00000213754",rownames(input))          # PANC754
+i=grep("ENSG00000181896",rownames(input))          # ZNF101
+i=grep("ENSG00000131849",rownames(input))          # ZNF132
+i=grep(Symbol2ENSG("NCOA4")[1,2],rownames(input))  # NCOA4
+i=grep(Symbol2ENSG("SLC7A11")[1,2],rownames(input))# SLC7A11
+i=grep(Symbol2ENSG("SAT2")[1,2],rownames(input))   # SAT2
+i=grep(Symbol2ENSG("GSS")[1,2],rownames(input))    # GSS
+i=grep("ENSG00000120256",rownames(input))          # LRP11
 
 
-xxxv<-read.csv("https://raw.githubusercontent.com/Shicheng-Guo/ferroptosis/master/ferroptosis.genelist.csv",head=F)
-xxxv<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/ferroptosis/master/tsg.positivecontrol.txt",head=F)
-xxxv<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/esophageal/master/phase1.genelist.txt",head=F)
-xxxv<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/breast/master/target.txt",head=T)
-xxxv<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/cholangiocarcinoma/master/cholangiocarcinoma.hg19.bed",head=T,as.is=T,sep="\t")
-xxxv<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/drugtarget/master/extdata/2993drugtarget.txt",sep="\t",as.is=T)[,1]
-xxxv<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/encode/master/TFBS/685TFBS.txt",sep="\t",as.is=T)[,1]
+xii<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/ferroptosis/master/codependency.txt",as.is=T)[,1]
+xii<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/ferroptosis/master/ferroptosis.genelist.txt",sep="\t",as.is=T)[,2]
+xii<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/ferroptosis/master/SLC7A11.codependency.txt",as.is=T)[,1]
+xii<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/breast/master/extdata/brca.tcga.target.hg19.bed",sep="\t",as.is=T)[,4]
+xii<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/cholangiocarcinoma/master/cholangiocarcinoma.hg19.bed",sep="\t",as.is=T)[,4]
+xii<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/drugtarget/master/extdata/2993drugtarget.txt",sep="\t",as.is=T)[,1]
+xii<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/encode/master/TFBS/685TFBS.txt",sep="\t",as.is=T)[,1]
 
 # mkdir /mnt/bigdata/Genetic/Projects/shg047/meta/tfbs/
 # mkdir /mnt/bigdata/Genetic/Projects/shg047/meta/tfbs/os
 # mkdir /mnt/bigdata/Genetic/Projects/shg047/meta/tfbs/dge
-
-setwd("~/hpc/methylation/chol/meta/dge")
-setwd("/mnt/bigdata/Genetic/Projects/shg047/meta/drug/dge")
 setwd("/mnt/bigdata/Genetic/Projects/shg047/meta/drug")
-setwd("/mnt/bigdata/Genetic/Projects/shg047/meta/tfbs/os")
 setwd("/mnt/bigdata/Genetic/Projects/shg047/meta/tfbs/dge")
+setwd("/mnt/bigdata/Genetic/Projects/shg047/meta/tfbs/os")
 
-ENSG<-Symbol2ENSG(as.character(xxxv))
+ENSG<-Symbol2ENSG(as.character(xii))
 xgene<-c(as.character(ENSG[,2]))
 ii<-unique(unlist(lapply(xgene,function(x) grep(x,rownames(input)))))
 
-Seq<-paste(phen$project_id,phen$phen2,sep="-")
-rlt<-c()
-coll<-c()
+out2<-c()
+z<-1
 
 for(i in ii){
-  mean<-tapply(as.numeric(input[i,]),Seq,function(x) mean(x,na.rm=T))
-  sd<-tapply(as.numeric(input[i,]),Seq,function(x) sd(x,na.rm=T))
-  num<-tapply(as.numeric(input[i,]),Seq,function(x) length(x))
-  m1i=mean[seq(1,length(mean),by=2)]
-  m2i=mean[seq(2,length(mean),by=2)]
-  sd1i=sd[seq(1,length(mean),by=2)]
-  sd2i=sd[seq(2,length(mean),by=2)]
-  n1i=num[seq(1,length(mean),by=2)]
-  n2i=num[seq(2,length(mean),by=2)]
-  Source<-unlist(lapply(strsplit(names(m1i),"-"),function(x) x[2]))
-  output<-data.frame(cbind(n1i,m1i,sd1i,n2i,m2i,sd2i))
-  output$source=Source
-  output<-na.omit(output)
-  es<-escalc(m1i=m1i, sd1i=sd1i, n1i=n1i, m2i=m2i, sd2i=sd2i, n2i=n2i,measure="MD",data=output)
-  md <- rma(es,slab=source,method = "REML", measure = "SMD",data=output)
-  rlt<-rbind(rlt,c(i,md$beta,md$pval,md$ci.lb,md$ci.ub,md$I2,md$tau2))
-  coll<-c(coll,i)
-  m<-metagen(yi,seTE=vi,data = es,
-             comb.fixed = TRUE,
-             comb.random = TRUE,
-             prediction=F,
-             sm="SMD")
-
-  Symbol<-ENSG2Symbol(rownames(input)[i])
-  print(c(i,as.character(Symbol)))
-  pdf(paste(Symbol,"-",rownames(input)[i],".SMD.PANC.pdf",sep=""))
-  forest(m,leftlabs = Source,
-         lab.e = "Intervention",
-         pooled.totals = FALSE,
-         smlab = "",studlab=Source,
-         text.random = "Overall effect",
-         print.tau2 = FALSE,
-         col.diamond = "blue",
-         col.diamond.lines = "black",
-         col.predict = "red",
-         print.I2.ci = TRUE,
-         digits.sd = 2,fontsize=8)
-  dev.off()
+z<-z+1
+HR<-c()
+for(TCGAProject in TCGAProjects){
+  newdata<-input[,phen$project_id==paste("TCGA-",TCGAProject,sep="")]
+  xphen<-phen[phen$project_id==paste("TCGA-",TCGAProject,sep=""),]
+  dat<-data.frame(Rna=newdata[i,],xphen)
+  thres<-mean(dat[,1],na.rm=T)
+  #dat$Rna[dat$Rna<=thres]<-0
+  #dat$Rna[dat$Rna>thres]<-1
+  hr.fit<-summary(coxph(Surv(week,censored)~Rna,dat))
+  hr1=hr.fit$coefficients[1,]
+  hr2=hr.fit$conf.int[1,]
+  HR<-rbind(HR,c(hr1,hr2[3],hr2[4]))
+  
+  fit <- survfit(Surv(week,censored)~Rna, data = dat)
+  # survp<-ggsurvplot(fit, data = dat,conf.int = F,pval = TRUE,
+  #                 fun = "pct",risk.table = TRUE,size = 1,linetype = "strata",
+  #                 palette = c("#2E9FDF","#E7B800"),
+  #                 legend = "bottom",legend.title = rownames(input)[i],
+  #                 legend.labs = c("Low-expression","High-expression"))
+  # ggsave(file = paste(ENSG2Symbol(rownames(input)[i]),"-",rownames(input)[i],"_",TCGAProject,"_KM.pdf",sep=""), survp$plot)
 }
-rownames(rlt)<-ENSG2Symbol(rownames(input)[coll])
-colnames(rlt)<-c("idx","beta","pval","cilb","ciub","i2","tau2")
-rlt<-data.frame(rlt)
-rlt<-rlt[order(rlt$pval),]
 
-write.table(rlt,file="pancaner.tfbs.dmg.smd.meta.pvalue.txt",sep="\t",quote=F,col.names = NA,row.names = T)
-write.csv(rlt,file="pancancer.tfbs.dmg.smd.meta.pvalue.csv",quote=F)
+print(c(z,i))
+rownames(HR)<-TCGAProjects
+m<-metagen(HR[,1],seTE=HR[,3],comb.fixed = TRUE,comb.random = TRUE,prediction=F,sm="HR")
+fixedEffect<-c(exp(m$TE.fixed),exp(m$lower.fixed),exp(m$upper.fixed),m$pval.fixed)
+randomEffect<-c(exp(m$TE.random),exp(m$lower.random),exp(m$upper.random),m$pval.random)
+out2<-rbind(out2,c(fixedEffect,randomEffect))
 
-bed<-ensg2bed(as.character(rownames(rlt)))
-xsel<-unlist(apply(bed,1,function(x) grep(x[4],rownames(rlt))))
-output<-data.frame(bed,rlt[xsel,])
-library("CMplot")
-cminput<-data.frame(SNP=output$V5,Chromosome=output$V1,Position=output$V2,trait1=output[,7])
-CMplot(cminput,plot.type="b",ylim=20,LOG10=TRUE,threshold=NULL,file="jpg",memo="",dpi=300,file.output=TRUE,verbose=TRUE,width=14,height=6)
+if(! is.na(fixedEffect[4]) & fixedEffect[4]<0.000001){
+pdf(paste(ENSG2Symbol(rownames(input)[i]),"-",rownames(input)[i],".OS.HR.PANC.pdf",sep=""))
+print(rownames(input)[i])
+forest(m,leftlabs = rownames(HR),
+       lab.e = "Intervention",
+       pooled.totals = FALSE,
+       smlab = "",studlab=rownames(HR),
+       text.random = "Overall effect",
+       print.tau2 = FALSE,
+       col.diamond = "blue",
+       col.diamond.lines = "black",
+       col.predict = "red",
+       print.I2.ci = TRUE,
+       digits.sd = 2,fontsize=9,xlim=c(0.2,3))
+dev.off()
+write.table(HR,file=paste(ENSG2Symbol(rownames(input)[i]),"-",rownames(input)[i],".OS.HR.EACH.txt",sep=""),sep="\t",quote=F,col.names=NA,row.names=T)
+}
+}
 
-write.table(cminput,file="pancancer.tfbs.meta.dge.txt",sep="\t",quote=F,row.name=T,col.names=NA)
+colnames(out2)<-c("TE.fixed","lower.fixed","upper.fixed","pval.fixed","TE.random","lower.random","upper.random","pval.random")
+rownames(out2)<-rownames(input)
+write.csv(out2,file=paste("pancancer.tfbs.rnaseq.","OS.HR.csv",sep=""),quote=F)
+write.table(out2,file=paste("pancancer.tfbs.rnaseq.","OS.HR.txt",sep=""),quote=F,sep="\t",col.names=NA,row.names=T)
