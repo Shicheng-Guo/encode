@@ -145,10 +145,3 @@ cminput<-data.frame(SNP=output$V5,Chromosome=output$V1,Position=output$V2,trait1
 CMplot(cminput,plot.type="b",ylim=20,LOG10=TRUE,threshold=NULL,file="jpg",memo="",dpi=300,file.output=TRUE,verbose=TRUE,width=14,height=6)
 
 write.table(cminput,file="pancancer.tfbs.meta.dge.txt",sep="\t",quote=F,row.name=T,col.names=NA)
-
-
-
-
-
-
-
