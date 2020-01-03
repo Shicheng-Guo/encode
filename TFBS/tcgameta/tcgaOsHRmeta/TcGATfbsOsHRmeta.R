@@ -74,9 +74,14 @@ xii<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/ferroptosis/mast
 xii<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/breast/master/extdata/brca.tcga.target.hg19.bed",sep="\t",as.is=T)[,4]
 xii<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/cholangiocarcinoma/master/cholangiocarcinoma.hg19.bed",sep="\t",as.is=T)[,4]
 xii<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/drugtarget/master/extdata/2993drugtarget.txt",sep="\t",as.is=T)[,1]
+xii<-read.table("https://raw.githubusercontent.com/Shicheng-Guo/encode/master/TFBS/685TFBS.txt",sep="\t",as.is=T)[,1]
 
-setwd("~/hpc/meta/hpcOS")
+# mkdir /mnt/bigdata/Genetic/Projects/shg047/meta/tfbs/
+# mkdir /mnt/bigdata/Genetic/Projects/shg047/meta/tfbs/os
+# mkdir /mnt/bigdata/Genetic/Projects/shg047/meta/tfbs/dge
 setwd("/mnt/bigdata/Genetic/Projects/shg047/meta/drug")
+setwd("/mnt/bigdata/Genetic/Projects/shg047/meta/tfbs/dge")
+setwd("/mnt/bigdata/Genetic/Projects/shg047/meta/tfbs/os")
 
 ENSG<-Symbol2ENSG(as.character(xii))
 xgene<-c(as.character(ENSG[,2]))
@@ -137,5 +142,5 @@ write.table(HR,file=paste(ENSG2Symbol(rownames(input)[i]),"-",rownames(input)[i]
 
 colnames(out2)<-c("TE.fixed","lower.fixed","upper.fixed","pval.fixed","TE.random","lower.random","upper.random","pval.random")
 rownames(out2)<-rownames(input)
-write.csv(out2,file=paste("pancancer.rnaseq.","OS.HR.csv",sep=""),quote=F)
-write.table(out2,file=paste("pancancer.rnaseq.","OS.HR.txt",sep=""),quote=F,sep="\t",col.names=NA,row.names=T)
+write.csv(out2,file=paste("pancancer.tfbs.rnaseq.","OS.HR.csv",sep=""),quote=F)
+write.table(out2,file=paste("pancancer.tfbs.rnaseq.","OS.HR.txt",sep=""),quote=F,sep="\t",col.names=NA,row.names=T)
