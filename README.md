@@ -1,7 +1,7 @@
 
 Timeline: 
 
-* 2020/01/07: DGE Pancancer analysis to 1639 TFs and 109 DGE-TFs in which [61](TF.dge.up.tcga.pancancer.smd.meta.pvalue.csv) upreagulated and [48](TF.dge.down.tcga.pancancer.smd.meta.pvalue.csv) downregulated.
+* 2020/01/07: DGE Pancancer analysis to 1639 TFs and 109 DGE-TFs in which [61](./TFBS/TF.dge.up.tcga.pancancer.smd.meta.pvalue.csv) upreagulated and [48](./TFBS/TF.dge.down.tcga.pancancer.smd.meta.pvalue.csv) downregulated.
 * 2020/01/07: Update to have a [1,639 full transcriptional factor list]() download from [wiki]()
 * 2020/01/04: data matrix is showed in: https://genome.ucsc.edu/ENCODE/dataMatrix/encodeDataMatrixHuman.html
 * 2020/01/03: [Top 30](https://github.com/Shicheng-Guo/encode/blob/master/TFBS/tcgameta/pancancer.tfbs.pick.rnaseq.dmg.smdos.hr.pick.csv) cancer related transcriptional factors were identified and the images were saved [here]()
